@@ -1,6 +1,5 @@
 import pandas as pd
 import os
-import sqlite3
 import xml.etree.ElementTree as et
 
 class Labeller:
