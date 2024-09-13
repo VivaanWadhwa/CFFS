@@ -3,8 +3,12 @@ import os
 import xml.etree.ElementTree as et
 import labeller
 import numpy as np
+from typing import Tuple
 
 class Calculator:
+    New_Items = None
+    NonStdPreps = None
+    NonStdItems = None
 
     def __init__(self, labeller) -> None:
         self.labeller = labeller
@@ -18,6 +22,9 @@ class Calculator:
 
     def preprocessing(self) -> None:
         self.updateConversions()
+        self.labeller.Preps = self.cleanPreps()
+        self.New_Items = self.findNewItems()
+        self.NonStdItems = self.findNonStdItems()
 
 
     def updateConversions(self) -> None:
@@ -33,8 +40,6 @@ class Calculator:
         frames = [Conversions, Update_Conv]
         Conversions = pd.concat(frames).reset_index(drop=True, inplace=False).drop_duplicates()
         Update_Conv.to_csv("data/cleaning/update/Conv_UpdateConv.csv", index=False)
-
-    from typing import Tuple
 
     def SpecialConverter(self, ingre , qty, uom) -> Tuple[float, str]:
         Std_Unit = pd.read_csv(os.path.join(os.getcwd(), "data", "external", "standard_conversions.csv"))
@@ -101,7 +106,59 @@ class Calculator:
         return Items_Nonstd
     
     def cleanPreps(self) -> pd.DataFrame:
-        self.labeller.Preps['StdQty'] = np.nan
-        self.labeller.Preps['StdUom'] = np.nan
-        
+        Preps = self.labeller.Preps
+        Preps['StdQty'] = np.nan
+        Preps['StdUom'] = np.nan
+        for index in Preps.index:
+            PrepId = Preps.loc[index,'PrepId']
+            Qty = Preps.loc[index,'PakQty']
+            Uom = Preps.loc[index,'PakUOM']
+            Preps.loc[index,'StdQty'] = self.SpecialConverter(PrepId, Qty, Uom)[0]
+            Preps.loc[index,'StdUom'] = self.SpecialConverter(PrepId, Qty, Uom)[1]
+        self.NonStdPreps = self.findNonStdPreps(Preps)
+        return Preps
+
+    def findNonStdPreps(self, Preps) -> pd.DataFrame:
+        col_names = list(Preps.columns.values)
+        Preps_Nonstd = []
+        for index, row in Preps.iterrows():
+            StdUom = Preps.loc[index,'StdUom']
+            if StdUom not in ['g', 'ml']:
+                Dict = {}
+                Dict.update(dict(row))
+                Preps_Nonstd.append(Dict)
+        Preps_Nonstd = pd.DataFrame(Preps_Nonstd, columns = col_names)
+        Manual_PrepU = pd.read_csv(os.path.join(os.getcwd(), "data", "cleaning", "update", "Preps_UpdateUom.csv"))
+        col_names = list(Preps_Nonstd.columns.values)
+        Preps_Nonstd_na = []
+        for index, row in Preps_Nonstd.iterrows():
+            PrepId = Preps_Nonstd.loc[index,'PrepId']
+            if PrepId not in Manual_PrepU['PrepId'].values:
+                Dict = {}
+                Dict.update(dict(row))
+                Preps_Nonstd_na.append(Dict)
+        Preps_Nonstd = pd.DataFrame(Preps_Nonstd_na, columns = col_names)
+        path = os.path.join(os.getcwd(), "data", "cleaning", "Preps_NonstdUom.csv")
+        Preps_Nonstd.to_csv(path, index = False, header = True)
+        return Preps_Nonstd
+
+    def findNewItems(self) -> pd.DataFrame:
+        Items_Assigned = pd.read_csv(os.path.join(os.getcwd(), "data", "mapping", "Items_List_Assigned.csv"))
+        # Filter new items by itemID that are not in the database and output them in a dataframe
+        Items = self.labeller.Items
+        col_names = list(Items.columns.values)
+        New_Items_List = []
+        for index, row in Items.iterrows():
+            ItemId = Items.loc[index,'ItemId']
+            if ItemId not in Items_Assigned['ItemId'].values:
+                Dict = {}
+                Dict.update(dict(row))
+                New_Items_List.append(Dict)
+        New_Items = pd.DataFrame(New_Items_List, columns = col_names)
+        New_Items.insert(1, "CategoryID", '')
+        if not New_Items.empty:
+            return New_Items
+        else:
+            return None
+    
 
