@@ -13,6 +13,8 @@ class Calculator:
     def __init__(self, labeller) -> None:
         self.labeller = labeller
 
+    ## Data Cleaning
+
     def assign_multiplier(df):
         for ind, row in df.iterrows():
             if row["ConvertFromQty"] == 0 or row["ConvertToQty"] == 0:
@@ -161,4 +163,8 @@ class Calculator:
         else:
             return None
     
+    
+    ## Mapping and updating data
+    
+
 
