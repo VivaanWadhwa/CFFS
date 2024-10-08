@@ -1,58 +1,63 @@
+"""Modules for reading xml files and creating dataframes from them"""
 import pandas as pd
 import os
 import xml.etree.ElementTree as et
 
-class Labeller:
-    filepath = None
-    Items = None
-    Ingredients = None
-    Preps = None
-    Products = None
-    Conversions = None
 
-    def __init__(self, filepath) -> None:
+class Labeller:
+    """This class is designed for representing the preprocessed dataset"""
+    filepath = None
+    items = None
+    ingredients = None
+    preps = None
+    products = None
+    conversions = None
+
+    def __init__(self, filepath: list[str]) -> None:
         self.filepath = filepath
-        self.readRecipes()
-    
-    def readItems(self) -> None:
+        self.read_recipes()
+
+    def read_items(self) -> None:
+        """Function for reading in all items required for recipes"""
         # Read items.xml files in the filepath_list and construct a dataframe
-        ItemId = []
-        Description = []
-        CaseQty = []
-        CaseUOM = []
-        PakQty = []
-        PakUOM = []
-        InventoryGroup = []
+        itemid = []
+        description = []
+        caseqty = []
+        caseuom = []
+        pakqty = []
+        pakuom = []
+        inventorygroup = []
         # from the items xml file, findtext of CaseQty, CaseUOM, PakQty, PakUOM, and InventoryGroup
         # then append it on the lists above
         for filepath in self.filepath:
             path = filepath + '/Items.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
-                xroot = xtree.getroot()
                 for item in xtree.iterfind('Item'):
-                    ItemId.append(item.attrib['id'])
-                    Description.append(item.findtext('Description'))
-                    CaseQty.append(item.findtext('CaseQty'))
-                    CaseUOM.append(item.findtext('CaseUOM'))
-                    PakQty.append(item.findtext('PakQty'))
-                    PakUOM.append(item.findtext('PakUOM'))
-                    InventoryGroup.append(item.findtext('InventoryGroup'))
+                    itemid.append(item.attrib['id'])
+                    description.append(item.findtext('Description'))
+                    caseqty.append(item.findtext('CaseQty'))
+                    caseuom.append(item.findtext('CaseUOM'))
+                    pakqty.append(item.findtext('PakQty'))
+                    pakuom.append(item.findtext('PakUOM'))
+                    inventorygroup.append(item.findtext('InventoryGroup'))
         # Create a dataframe from the lists created above.
-        self.Items = pd.DataFrame({'ItemId': ItemId, 'Description': Description, 'CaseQty': CaseQty, 
-                            'CaseUOM': CaseUOM, 'PakQty': PakQty, 'PakUOM': PakUOM, 'InventoryGroup': InventoryGroup}
+        self.items = pd.DataFrame({'ItemId': itemid, 'Description': description, 'CaseQty': caseqty,
+                            'CaseUOM': caseuom, 'PakQty': pakqty, 'PakUOM': pakuom,
+                            'InventoryGroup': inventorygroup}
                             )
-        self.Items.drop_duplicates(inplace=True)
-        self.Items.reset_index(drop=True, inplace=True)
+        self.items.drop_duplicates(inplace=True)
+        self.items.reset_index(drop=True, inplace=True)
 
-    def readIngredients(self) -> None:
+    def read_ingredients(self) -> None:
+        """Function for reading in all ingredients required for recipes"""
         # Read ingredients.xml files in the filepath_list and construct a dataframe
-        IngredientId = []
-        Conversion = []
-        InvFactor = []
-        Qty = []
-        Recipe = []
-        Uom = []
+        ingredientid = []
+        conversion = []
+        invfactor = []
+        qty = []
+        recipe = []
+        uom = []
         # Using the Ingredients XML file, we extract attributes containing ingredients, conversion, invFactor, qty, recipe, and uom. 
         # Then we append it onto the IngredientId, Coversion, InvFactor, Qty, Recipe, and Uom lists
         # Then we create a dataframe using the lists created. 
@@ -60,88 +65,86 @@ class Labeller:
             path = filepath + '/Ingredients.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
-                xroot = xtree.getroot()
                 for x in xtree.iterfind('Ingredient'):
-                    IngredientId.append(x.attrib['ingredient'])
-                    Conversion.append(x.attrib['conversion'])
-                    InvFactor.append(x.attrib['invFactor'])
-                    Qty.append(x.attrib['qty'])
-                    Recipe.append(x.attrib['recipe'])
-                    Uom.append(x.attrib['uom'])            
-        self.Ingredients = pd.DataFrame({'IngredientId': IngredientId, 'Qty': Qty,'Uom': Uom, 'Conversion': Conversion, 
-                            'InvFactor': InvFactor,'Recipe': Recipe}).drop_duplicates()
-        self.Ingredients.drop_duplicates(subset=["IngredientId", "Recipe"], inplace=True)
-        self.Ingredients.reset_index(drop=True, inplace=True)
+                    ingredientid.append(x.attrib['ingredient'])
+                    conversion.append(x.attrib['conversion'])
+                    invfactor.append(x.attrib['invFactor'])
+                    qty.append(x.attrib['qty'])
+                    recipe.append(x.attrib['recipe'])
+                    uom.append(x.attrib['uom'])            
+        self.ingredients = pd.DataFrame({'IngredientId': ingredientid, 'Qty': qty,'Uom': uom, 'Conversion': conversion, 
+                            'InvFactor': invfactor,'Recipe': recipe}).drop_duplicates()
+        self.ingredients.drop_duplicates(subset=["IngredientId", "Recipe"], inplace=True)
+        self.ingredients.reset_index(drop=True, inplace=True)
     
-    def readPreps(self) -> None:
-        PrepId = []
-        Description = []
-        PakQty = []
-        PakUOM = []
-        InventoryGroup = []
+    def read_preps(self) -> None:
+        """Function for reading in all preparations required for recipes"""
+        prepid = []
+        description = []
+        pakqty = []
+        pakuom = []
+        inventorygroup = []
         for filepath in self.filepath:
             path = filepath + '/Preps.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
-                xroot = xtree.getroot()
                 for x in xtree.iterfind('Prep'):
-                    PrepId.append(x.attrib['id'])
-                    Description.append(x.findtext('Description'))
-                    PakQty.append(x.findtext('PakQty'))
-                    PakUOM.append(x.findtext('PakUOM'))
-                    InventoryGroup.append(x.findtext('InventoryGroup'))
-        self.Preps = pd.DataFrame({'PrepId': PrepId, 'Description': Description,
-                        'PakQty': PakQty, 'PakUOM':PakUOM, 'InventoryGroup': InventoryGroup}).drop_duplicates()
-        preps_columns = self.Preps.columns
-        self.Preps.drop_duplicates(subset=["PrepId"], inplace=True)
-        self.Preps.reset_index(drop=True, inplace=True)
+                    prepid.append(x.attrib['id'])
+                    description.append(x.findtext('Description'))
+                    pakqty.append(x.findtext('PakQty'))
+                    pakuom.append(x.findtext('PakUOM'))
+                    inventorygroup.append(x.findtext('InventoryGroup'))
+        self.preps = pd.DataFrame({'PrepId': prepid, 'Description': description,
+                        'PakQty': pakqty, 'PakUOM':pakuom, 'InventoryGroup': inventorygroup}).drop_duplicates()
+        self.preps.drop_duplicates(subset=["PrepId"], inplace=True)
+        self.preps.reset_index(drop=True, inplace=True)
     
-    def readProducts(self) -> None:
-        # Read products.xml files in the filepath_list and construct a dataframe
-        ProdId = []
-        Description = []
-        SalesGroup = []
+    def read_products(self) -> None:
+        """Function for reading in all recipes Names"""
+        prodid = []
+        description = []
+        salesgroup = []
         for filepath in self.filepath:
             path = filepath + '/Products.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
-                xroot = xtree.getroot()
                 for x in xtree.iterfind('Prod'):
-                    ProdId.append(x.attrib['id'])
-                    Description.append(x.findtext('Description'))
-                    SalesGroup.append(x.findtext('SalesGroup'))
-        self.Products = pd.DataFrame({'ProdId': ProdId, 'Description': Description, 'SalesGroup': SalesGroup})
-        self.Products.drop_duplicates(inplace=True)
-        self.Products.reset_index(drop=True, inplace=True)
+                    prodid.append(x.attrib['id'])
+                    description.append(x.findtext('Description'))
+                    salesgroup.append(x.findtext('SalesGroup'))
+        self.products = pd.DataFrame({'ProdId': prodid, 'Description': description, 'SalesGroup': salesgroup})
+        self.products.drop_duplicates(inplace=True)
+        self.products.reset_index(drop=True, inplace=True)
 
-    def readConversions(self) -> None:
-        ConversionId = []
-        Multiplier = []
-        ConvertFromQty = []
-        ConvertFromUom = []
-        ConvertToQty = []
-        ConvertToUom = []
+    def read_conversions(self) -> None:
+        """Function for reading in all conversions required for recipes"""
+        conversionid = []
+        multiplier = []
+        convertfromqty = []
+        convertfromuom = []
+        converttoqty = []
+        converttouom = []
         for filepath in self.filepath:
             path = filepath + '/Conversions.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
-                xroot = xtree.getroot()
                 for x in xtree.iterfind('Conversion'):
-                    ConversionId.append(x.attrib['id'])
-                    Multiplier.append(x.attrib['multiplier'])
-                    ConvertFromQty.append(x.find('ConvertFrom').attrib['qty'])
-                    ConvertFromUom.append(x.find('ConvertFrom').attrib['uom'])
-                    ConvertToQty.append(x.find('ConvertTo').attrib['qty'])
-                    ConvertToUom.append(x.find('ConvertTo').attrib['uom'])
-        self.Conversions = pd.DataFrame({'ConversionId': ConversionId, 'Multiplier': Multiplier, 'ConvertFromQty': ConvertFromQty,
-                                'ConvertFromUom': ConvertFromUom, 'ConvertToQty': ConvertToQty, 'ConvertToUom': ConvertToUom}
+                    conversionid.append(x.attrib['id'])
+                    multiplier.append(x.attrib['multiplier'])
+                    convertfromqty.append(x.find('ConvertFrom').attrib['qty'])
+                    convertfromuom.append(x.find('ConvertFrom').attrib['uom'])
+                    converttoqty.append(x.find('ConvertTo').attrib['qty'])
+                    converttouom.append(x.find('ConvertTo').attrib['uom'])
+        self.conversions = pd.DataFrame({'ConversionId': conversionid, 'Multiplier': multiplier, 'ConvertFromQty': convertfromqty,
+                                'ConvertFromUom': convertfromuom, 'ConvertToQty': converttoqty, 'ConvertToUom': converttouom}
                                 ).drop_duplicates()
-        self.Conversions.reset_index(drop=True, inplace=True)
+        self.conversions.reset_index(drop=True, inplace=True)
 
-    def readRecipes(self):
-        self.readItems()
-        self.readIngredients()
-        self.readPreps()
-        self.readProducts()
-        self.readConversions()
+    def read_recipes(self):
+        """Function for reading in all recipes"""
+        self.read_items()
+        self.read_ingredients()
+        self.read_preps()
+        self.read_products()
+        self.read_conversions()
 

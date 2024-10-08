@@ -41,7 +41,7 @@ class Calculator:
                 print(f"Warning: 'ConversionId' {Id} not found in Conversions DataFrame. Skipping drop operation.")
         frames = [Conversions, Update_Conv]
         Conversions = pd.concat(frames).reset_index(drop=True, inplace=False).drop_duplicates()
-        Update_Conv.to_csv("data/cleaning/update/Conv_UpdateConv.csv", index=False)
+        Update_Conv.to_csv(os.path.join(os.getcwd(), "data", "cleaning", "update", "Conv_UpdateConv.csv"), index=False)
 
     def SpecialConverter(self, ingre , qty, uom) -> Tuple[float, str]:
         Std_Unit = pd.read_csv(os.path.join(os.getcwd(), "data", "external", "standard_conversions.csv"))

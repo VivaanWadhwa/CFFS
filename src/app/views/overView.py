@@ -36,10 +36,10 @@ class overviewPage(QMainWindow):
 
         self.button4 = QPushButton("Show Category 4")
         self.button4.clicked.connect(lambda: self.update_list("Category 4"))
-        self.button_layout.addWidget(self.button4)\
+        self.button_layout.addWidget(self.button4)
         
         self.button5 = QPushButton("Next")
-        self.button5.clicked.connect()
+        self.button5.clicked.connect(self.navigate())
         self.button_layout.addWidget(self.button5)
 
         # Populate the list with initial items
@@ -47,7 +47,7 @@ class overviewPage(QMainWindow):
 
     def navigate(self):
         self.hide()
-        from app.views.
+        
 
     def update_list(self, category):
         """Update the list based on the selected category"""
