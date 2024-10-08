@@ -1,20 +1,40 @@
 """Modules for reading xml files and creating dataframes from them"""
-import pandas as pd
 import os
 import xml.etree.ElementTree as et
+from typing import List
+import pandas as pd
 
 
 class Labeller:
     """This class is designed for representing the preprocessed dataset"""
-    filepath = None
+    filepaths = None
     items = None
     ingredients = None
     preps = None
     products = None
     conversions = None
-    def __init__(self, filepath: list[str]) -> None:
-        self.filepath = filepath
+    restaurant_name = None
+    def __init__(self, filepath: List[str], restaurant) -> None:
+        for path in filepath:
+            if not os.path.isdir(path):
+                raise FileNotFoundError(f"The path provided does not exist: {path}")
+        self.filepaths = filepath
+        self.restaurant_name = restaurant
         self.read_recipes()
+    def __repr__(self) -> str:
+        string = f"Labeller FOR {self.restaurant_name}\nItems: {self.items.shape[0]}\nIngredients: {self.ingredients.shape[0]}\nPreps: {self.preps.shape[0]}\nProducts: {self.products.shape[0]}\nConversions: {self.conversions.shape[0]}"
+        return string
+    def __str__(self) -> str:
+        string = f"""
+        Labeller FOR {self.restaurant_name}
+        Items: {self.items.shape[0]}
+        Ingredients: {self.ingredients.shape[0]}
+        Preps: {self.preps.shape[0]}
+        Products: {self.products.shape[0]}
+        Conversions: {self.conversions.shape[0]}
+        """
+        return string
+
     def read_items(self) -> None:
         """Function for reading in all items required for recipes"""
         # Read items.xml files in the filepath_list and construct a dataframe
@@ -27,7 +47,7 @@ class Labeller:
         inventorygroup = []
         # from the items xml file, findtext of CaseQty, CaseUOM, PakQty, PakUOM, and InventoryGroup
         # then append it on the lists above
-        for filepath in self.filepath:
+        for filepath in self.filepaths:
             path = filepath + '/Items.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
@@ -61,7 +81,7 @@ class Labeller:
         # conversion, invFactor, qty, recipe, and uom.
         # Then we append it onto the IngredientId, Coversion, InvFactor, Qty, Recipe, and Uom lists
         # Then we create a dataframe using the lists created.
-        for filepath in self.filepath:
+        for filepath in self.filepaths:
             path = filepath + '/Ingredients.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
@@ -71,7 +91,7 @@ class Labeller:
                     invfactor.append(x.attrib['invFactor'])
                     qty.append(x.attrib['qty'])
                     recipe.append(x.attrib['recipe'])
-                    uom.append(x.attrib['uom'])            
+                    uom.append(x.attrib['uom'])
         self.ingredients = pd.DataFrame({'IngredientId': ingredientid,
                                          'Qty': qty,
                                          'Uom': uom,
@@ -79,7 +99,7 @@ class Labeller:
                                          'InvFactor': invfactor,
                                          'Recipe': recipe}).drop_duplicates()
         self.ingredients.drop_duplicates(subset=["IngredientId", "Recipe"], inplace=True)
-        self.ingredients.reset_index(drop=True, inplace=True) 
+        self.ingredients.reset_index(drop=True, inplace=True)
     def read_preps(self) -> None:
         """Function for reading in all preparations required for recipes"""
         prepid = []
@@ -87,7 +107,7 @@ class Labeller:
         pakqty = []
         pakuom = []
         inventorygroup = []
-        for filepath in self.filepath:
+        for filepath in self.filepaths:
             path = filepath + '/Preps.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
@@ -109,7 +129,7 @@ class Labeller:
         prodid = []
         description = []
         salesgroup = []
-        for filepath in self.filepath:
+        for filepath in self.filepaths:
             path = filepath + '/Products.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
@@ -130,7 +150,7 @@ class Labeller:
         convertfromuom = []
         converttoqty = []
         converttouom = []
-        for filepath in self.filepath:
+        for filepath in self.filepaths:
             path = filepath + '/Conversions.xml'
             if os.path.isfile(path):
                 xtree = et.parse(path)
