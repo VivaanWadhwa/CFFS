@@ -6,16 +6,19 @@ import numpy as np
 from typing import Tuple
 
 class Calculator:
-    New_Items = None
-    NonStdPreps = None
-    NonStdItems = None
+    new_items = None
+    nonstdpreps = None
+    nonstditems = None
+    liquid_unit = None
+    solid_unit = None
 
-    def __init__(self, labeller) -> None:
-        self.labeller = labeller
+    def __init__(self, labeller_instance) -> None:
+        self.labeller = labeller_instance
 
     ## Data Cleaning
 
-    def assign_multiplier(df):
+    def assign_multiplier(self,df: pd.DataFrame) -> None:
+        """Assigns a multiplier to each conversion in dataframe"""
         for ind, row in df.iterrows():
             if row["ConvertFromQty"] == 0 or row["ConvertToQty"] == 0:
                 df.loc[ind, "Multiplier"] = 1
@@ -23,57 +26,61 @@ class Calculator:
                 df.loc[ind, "Multiplier"] = row["ConvertFromQty"] / row["ConvertToQty"]
 
     def preprocessing(self) -> None:
-        self.updateConversions()
-        self.labeller.Preps = self.cleanPreps()
-        self.New_Items = self.findNewItems()
-        self.NonStdItems = self.findNonStdItems()
+        """Preprocesses the data"""
+        self.update_conversions()
+        self.labeller.preps = self.clean_preps()
+        self.new_items = self.find_new_items()
+        self.nonstditems = self.find_non_std_items()
 
 
-    def updateConversions(self) -> None:
-        Conversions = self.labeller.Conversions
-        Update_Conv = pd.read_csv(os.path.join(os.getcwd(), "data", "cleaning", "update", "Conv_UpdateConv.csv"))
-        self.assign_multiplier(Update_Conv)
-        for index, row in Update_Conv.iterrows():
-            Id = row['ConversionId'] 
-            if Id in Conversions['ConversionId'].values:
-                Conversions.drop(Conversions[Conversions['ConversionId'] == Id].index, inplace=True)
+    def update_conversions(self) -> None:
+        """Updates the existing conversions dataframe with the new one just read in"""
+        conversions = self.labeller.conversions
+        update_conv = pd.read_csv(os.path.join(os.getcwd(), "data", "cleaning", 
+                                               "update", "Conv_UpdateConv.csv"))
+        self.assign_multiplier(update_conv)
+        for _, row in update_conv.iterrows():
+            idx = row['ConversionId'] 
+            if idx in conversions['ConversionId'].values:
+                conversions.drop(conversions[conversions['ConversionId'] == idx].index,
+                                  inplace=True)
             else:
-                print(f"Warning: 'ConversionId' {Id} not found in Conversions DataFrame. Skipping drop operation.")
-        frames = [Conversions, Update_Conv]
-        Conversions = pd.concat(frames).reset_index(drop=True, inplace=False).drop_duplicates()
-        Update_Conv.to_csv(os.path.join(os.getcwd(), "data", "cleaning", "update", "Conv_UpdateConv.csv"), index=False)
-
-    def SpecialConverter(self, ingre , qty, uom) -> Tuple[float, str]:
-        Std_Unit = pd.read_csv(os.path.join(os.getcwd(), "data", "external", "standard_conversions.csv"))
-        self.liquid_unit = Std_Unit.loc[Std_Unit['ConvertToUom'] == 'ml', 'ConvertFromUom'].tolist()
-        self.solid_unit = Std_Unit.loc[Std_Unit['ConvertToUom'] == 'g', 'ConvertFromUom'].tolist()
-        Conversions = self.labeller.Conversions
-
+                print(f"Warning: 'ConversionId' {idx} not found in" +
+                      "Conversions DataFrame. Skipping drop operation.")
+        frames = [conversions, update_conv]
+        conversions = pd.concat(frames).reset_index(drop=True, inplace=False).drop_duplicates()
+        conversions.to_csv(os.path.join(os.getcwd(), "data", "cleaning", 
+                                        "update", "Conv_UpdateConv.csv"), index=False)
+    def special_converter(self, ingre: str , qty: float, uom: str) -> Tuple[float, str]:
+        """Converts a quantity and unit of measurement to standard units if possible"""
+        std_unit = pd.read_csv(os.path.join(os.getcwd(), "data", "external",
+                                            "standard_conversions.csv"))
+        self.liquid_unit = std_unit.loc[std_unit['ConvertToUom'] == 'ml', 'ConvertFromUom'].tolist()
+        self.solid_unit = std_unit.loc[std_unit['ConvertToUom'] == 'g', 'ConvertFromUom'].tolist()
         def std_converter(qty, uom):
-            if uom in Std_Unit['ConvertFromUom'].tolist():
-                multiplier = Std_Unit.loc[Std_Unit['ConvertFromUom'] == uom, 'Multiplier']
-                Qty = float(qty)*float(multiplier)
-                Uom = Std_Unit.loc[Std_Unit['ConvertFromUom'] == uom, 'ConvertToUom'].values[0]
+            if uom in std_unit['ConvertFromUom'].tolist():
+                multiplier = std_unit.loc[std_unit['ConvertFromUom'] == uom, 'Multiplier']
+                ret_qty = float(qty)*float(multiplier)
+                ret_uom = std_unit.loc[std_unit['ConvertFromUom'] == uom, 'ConvertToUom'].values[0]
             else:
-                Qty = qty
-                Uom = uom
-            return (Qty, Uom)
-        
-        spc_cov = list(filter(None, Conversions['ConversionId'].tolist()))
+                ret_qty = qty
+                ret_uom = uom
+            return (ret_qty, ret_uom)
+        conversions = self.labeller.conversions
+        spc_cov = list(filter(None, conversions['ConversionId'].tolist()))
         if uom in self.liquid_unit + self.solid_unit:
             return std_converter(qty, uom)
-        elif ingre in spc_cov:
-            conversion = Conversions.loc[(Conversions['ConversionId'] == ingre) & (Conversions['ConvertFromUom'] == uom)
-                                        & (Conversions['ConvertToUom'] == 'g')]
+        if ingre in spc_cov:
+            conversion = conversions.loc[(conversions['ConversionId'] == ingre) & 
+                                         (conversions['ConvertFromUom'] == uom)
+                                        & (conversions['ConvertToUom'] == 'g')]
             multiplier = conversion['Multiplier']
             if multiplier.empty:
                 return std_converter(qty, uom)
-            else: 
-                Qty = float(qty)/float(multiplier)
-                Uom = conversion['ConvertToUom'].values[0]
-                return (Qty, Uom)
-        else:
-            return std_converter(qty, uom)
+            ret_qty = float(qty)/float(multiplier)
+            ret_uom = conversion['ConvertToUom'].values[0]
+            return (ret_qty, ret_uom)
+        return std_converter(qty, uom)
     
     def findNonStdItems(self) -> pd.DataFrame:
         Ingredients = self.labeller.Ingredients
