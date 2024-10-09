@@ -38,6 +38,8 @@
 
 ## 7. Testing and Refinement (5-7 days)
 - [ ] Develop and run unit tests for core functionality
+    - [X] Make Tests for Labeller Class
+    - [ ] Make Tests for Calculator Class
 - [ ] Perform integration testing of UI and core functions
 - [ ] Conduct user testing (if possible)
 - [ ] Refine UI and functionality based on testing results

@@ -2,6 +2,9 @@ import os
 from typing import Tuple
 import numpy as np
 import pandas as pd
+import logging
+
+logging.basicConfig(level = logging.INFO, format = "%(asctime)s -- %(levelname)s - %(message)s")
 
 class Calculator:
     """This class is designed for representing the calculation workflow"""
@@ -13,7 +16,7 @@ class Calculator:
     def __init__(self, labeller_instance) -> None:
         self.labeller = labeller_instance
     ## Data Cleaning
-    def assign_multiplier(self,df: pd.DataFrame) -> None:
+    def __assign_multiplier(self,df: pd.DataFrame) -> None:
         """Assigns a multiplier to each conversion in dataframe"""
         for ind, row in df.iterrows():
             if row["ConvertFromQty"] == 0 or row["ConvertToQty"] == 0:
@@ -22,16 +25,16 @@ class Calculator:
                 df.loc[ind, "Multiplier"] = row["ConvertFromQty"] / row["ConvertToQty"]
     def preprocessing(self) -> None:
         """Preprocesses the data"""
-        self.update_conversions()
-        self.labeller.preps = self.clean_preps()
-        self.new_items = self.find_new_items()
-        self.nonstditems = self.find_non_std_items()
-    def update_conversions(self) -> None:
+        self.__update_conversions()
+        self.labeller.preps = self.__clean_preps()
+        self.new_items = self.__find_new_items()
+        self.nonstditems = self.__find_non_std_items()
+    def __update_conversions(self) -> None:
         """Updates the existing conversions dataframe with the new one just read in"""
         conversions = self.labeller.conversions
         update_conv = pd.read_csv(os.path.join(os.getcwd(), "data", "cleaning",
                                                "update", "Conv_UpdateConv.csv"))
-        self.assign_multiplier(update_conv)
+        self.__assign_multiplier(update_conv)
         for _, row in update_conv.iterrows():
             idx = row['ConversionId']
             if idx in conversions['ConversionId'].values:
@@ -44,7 +47,7 @@ class Calculator:
         conversions = pd.concat(frames).reset_index(drop=True, inplace=False).drop_duplicates()
         conversions.to_csv(os.path.join(os.getcwd(), "data", "cleaning",
                                         "update", "Conv_UpdateConv.csv"), index=False)
-    def special_converter(self, ingre: str , qty: float, uom: str) -> Tuple[float, str]:
+    def __special_converter(self, ingre: str , qty: float, uom: str) -> Tuple[float, str]:
         """Converts a quantity and unit of measurement to standard units if possible"""
         std_unit = pd.read_csv(os.path.join(os.getcwd(), "data", "external",
                                             "standard_conversions.csv"))
@@ -74,7 +77,7 @@ class Calculator:
             ret_uom = conversion['ConvertToUom'].values[0]
             return (ret_qty, ret_uom)
         return std_converter(qty, uom)
-    def find_non_std_items(self) -> pd.DataFrame:
+    def __find_non_std_items(self) -> pd.DataFrame:
         """Finds non-standard items in the ingredients dataframe"""
         ingredients = self.labeller.ingredients
         conversions = self.labeller.conversions
@@ -108,7 +111,7 @@ class Calculator:
         path = os.path.join(os.getcwd(), "data", "cleaning", "Items_Nonstd.csv")
         items_nonstd.to_csv(path, index = False, header = True)
         return items_nonstd
-    def clean_preps(self) -> pd.DataFrame:
+    def __clean_preps(self) -> pd.DataFrame:
         """Updates the Preps Datafram with standard quantity and unit of measurement"""
         ##TODO: Update this function to update prep weight using ingredients DF
         preps = self.labeller.preps
@@ -118,13 +121,13 @@ class Calculator:
             prepid = preps.loc[index,'PrepId']
             qty = preps.loc[index,'PakQty']
             uom = preps.loc[index,'PakUOM']
-            standard_qty, standard_uom = self.special_converter(prepid,qty,uom)
+            standard_qty, standard_uom = self.__special_converter(prepid,qty,uom)
             preps.loc[index,'StdQty'] = standard_qty
             preps.loc[index,'StdUom'] = standard_uom
-        self.nonstdpreps = self.find_non_std_preps(preps)
+        self.nonstdpreps = self.__find_non_std_preps(preps)
         return preps
 
-    def find_non_std_preps(self, preps: pd.DataFrame) -> pd.DataFrame:
+    def __find_non_std_preps(self, preps: pd.DataFrame) -> pd.DataFrame:
         """Finds non-standard preps in the preps dataframe"""
         col_names = list(preps.columns.values)
         preps_nonstd = []
@@ -149,7 +152,7 @@ class Calculator:
         path = os.path.join(os.getcwd(), "data", "cleaning", "Preps_NonstdUom.csv")
         preps_nonstd.to_csv(path, index = False, header = True)
         return preps_nonstd
-    def find_new_items(self) -> pd.DataFrame:
+    def __find_new_items(self) -> pd.DataFrame:
         """
         Finds items in the items dataframe that have not
         been assigned a category
