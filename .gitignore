@@ -6,3 +6,4 @@ __pycache__
 *.xlsx
 data/archive
 data/Misc
+.DS_Store
