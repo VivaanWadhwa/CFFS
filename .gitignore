@@ -1,3 +1,8 @@
-data
 cffs
 __pycache__
+*.csv
+*.xml
+*.zip
+*.xlsx
+data/archive
+data/Misc
