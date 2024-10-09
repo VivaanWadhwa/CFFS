@@ -68,6 +68,7 @@ class Labeller:
                                    'PakUOM': pakuom,'InventoryGroup': inventorygroup})
         self.items.drop_duplicates(inplace=True)
         self.items.reset_index(drop=True, inplace=True)
+        self.items.dropna(inplace=True)
     def read_ingredients(self) -> None:
         """Function for reading in all ingredients required for recipes"""
         # Read ingredients.xml files in the filepath_list and construct a dataframe

@@ -78,11 +78,12 @@ def test_labeller_with_missing_attributes_in_xml(mock_valid_item_xml, tmp_path):
     """Test Labeller with XML that has missing attributes."""
     missing_attr_xml = """<Items><Item id="1"></Item></Items>"""
     d = tmp_path / "data"
-    d.mkdir()
+    d.mkdir(exist_ok=True)
     file = d / "Items.xml"
     file.write_text(missing_attr_xml)
     
     labeller = Labeller([str(d)], restaurant="Test Restaurant")
+    print(labeller.items)
     assert labeller.items.empty, "DataFrame should be empty when attributes are missing."
 
 
@@ -99,7 +100,7 @@ def test_labeller_with_extra_attributes_in_xml(mock_valid_item_xml, tmp_path):
     </Item>
 </Items>"""
     d = tmp_path / "data"
-    d.mkdir()
+    d.mkdir(exist_ok=True)
     file = d / "Items.xml"
     file.write_text(extra_attr_xml)
     
@@ -120,7 +121,7 @@ def test_labeller_with_non_numeric_values_in_numeric_fields(mock_valid_item_xml,
     </Item>
 </Items>"""
     d = tmp_path / "data"
-    d.mkdir()
+    d.mkdir(exist_ok=True)
     file = d / "Items.xml"
     file.write_text(non_numeric_xml)
     
