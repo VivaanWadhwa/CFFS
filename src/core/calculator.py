@@ -13,6 +13,14 @@ class Calculator:
     nonstditems = None
     liquid_unit = None
     solid_unit = None
+    ghge_factors = None
+    nitro_factors = None
+    water_factors = None
+    land_factors = None
+    items_assigned = None
+    manual_prepu = None
+    manual_factor = None
+    mapping = None
     def __init__(self, labeller_instance) -> None:
         self.labeller = labeller_instance
     ## Data Cleaning
@@ -23,12 +31,6 @@ class Calculator:
                 df.loc[ind, "Multiplier"] = 1
             else:
                 df.loc[ind, "Multiplier"] = row["ConvertFromQty"] / row["ConvertToQty"]
-    def preprocessing(self) -> None:
-        """Preprocesses the data"""
-        self.__update_conversions()
-        self.labeller.preps = self.__clean_preps()
-        self.new_items = self.__find_new_items()
-        self.nonstditems = self.__find_non_std_items()
     def __update_conversions(self) -> None:
         """Updates the existing conversions dataframe with the new one just read in"""
         conversions = self.labeller.conversions
@@ -174,5 +176,124 @@ class Calculator:
         if not new_items.empty:
             return new_items
         return None
+
+    def preprocessing(self) -> None:
+        """Preprocesses the data"""
+        self.__update_conversions()
+        self.labeller.preps = self.__clean_preps()
+        self.new_items = self.__find_new_items()
+        self.nonstditems = self.__find_non_std_items()
     ## Mapping and updating data
+    def __read_emissions_data(self) -> dict:
+        """Read in constant emission data"""
+        #Reading in GHGE data
+        self.ghge_factors = pd.read_csv(os.path.join(os.getcwd(), "data",
+                                                     "external", "ghge_factors.csv"))
+        #Reading in Nitrogen lost data
+        self.nitro_factors = pd.read_csv(os.path.join(os.getcwd(), "data",
+                                                      "external", "nitrogen_factors.csv"))
+        #Reading in Water use data
+        self.water_factors = pd.read_csv(os.path.join(os.getcwd(), "data",
+                                                      "external", "water_factors.csv"))
+        #Read in Land use data and convert to m^2
+        self.land_factors = pd.read_csv(os.path.join(os.getcwd(), "data",
+                                                     "external", "land_factors.csv"))
+        self.land_factors.rename(columns={'km^2 land use/kg product': 'Land Use (m^2)'},
+                                 inplace=True)
+        self.land_factors['Land Use (m^2)'] *= 1000
+    def __read_update_data(self):
+        """Read in updated data"""
+        self.items_assigned = pd.read_csv(os.path.join(os.getcwd(), "data", "mapping",
+                                                      "Items_List_Assigned.csv"))
+        self.manual_prepu = pd.read_csv(os.path.join(os.getcwd(), "data", "cleaning",
+                                                     "update", "Preps_UpdateUom.csv"))
+        self.manual_factor = pd.read_csv(os.path.join(os.getcwd(), "data", "mapping",
+                                                       "Manual_Adjust_Factors.csv"))
+    def __update_preps(self) -> None:
+        """Update the preps dataframe with new data"""
+        for index, row in self.manual_prepu.iterrows():
+            PrepId = self.manual_prepu.loc[index, 'PrepId']
+            qty = self.manual_prepu.loc[index, 'StdQty']
+            uom = self.manual_prepu.loc[index, 'StdUom']
+            self.labeller.preps.loc[self.labeller.preps['PrepId'] == PrepId, 'StdQty'] = qty
+            self.labeller.preps.loc[self.labeller.preps['PrepId'] == PrepId, 'StdUom'] = uom
+        self.labeller.preps.drop_duplicates(subset=['PrepId'], inplace=True)
+    def __update_items_assigned(self) -> None:
+        """Update Items_Assigned with new items"""
+        new_items_added = pd.read_csv(os.path.join(os.getcwd(), "data", "mapping", "new items added"
+                                            ,"New_Items_2024", "New_Items_Added_2024-08-30.csv"))
+        frames = [self.items_assigned, new_items_added]
+        items_assigned_updated = pd.concat(frames).reset_index(
+                                                    drop=True, inplace=False).drop_duplicates()
+        items_assigned_updated[['CategoryID']] = items_assigned_updated[
+                                                    ['CategoryID']].apply(pd.to_numeric)
+        path = os.path.join(os.getcwd(), "data", "mapping", "Items_List_Assigned.csv")
+        items_assigned_updated.to_csv(path, index=False, header=True)
+        self.items_assigned = items_assigned_updated
+    def __create_mapping(self) -> None:
+        """Create a mapping between item and category"""
+        items = self.labeller.items
+        items_assigned = self.items_assigned
+        items = items.merge(items_assigned, on='ItemId', how='left')
+        items.drop_duplicates(subset=['ItemId'], inplace=True)
+        
+        mapping = pd.merge(items, self.ghge_factors[:,['Category ID','Food Category','Active Total Supply Chain Emissions (kg CO2 / kg food)']],
+                           how = 'left',
+                           left_on = 'CategoryID',
+                           right_on = 'Category ID')
+        
+        mapping = mapping.drop(columns = ['Category ID', 'Food Category_x'])
+
+        mapping = pd.merge(mapping, self.nitro_factors[:,['Category ID','Food Category','Nitrogen lost (kg N / kg food)']],
+                            how = 'left',
+                            left_on = 'CategoryID',
+                            right_on = 'Category ID')
+                
+        mapping = mapping.drop(columns = ['Category ID', 'Food Category_y'])
+
+        mapping = pd.merge(mapping, self.water_factors[:,['Category ID','Food Category','Water use (L / kg food)']],
+                            how = 'left',
+                            left_on = 'CategoryID',
+                            right_on = 'Category ID')
+                
+        mapping = mapping.drop(columns = ['Category ID', 'Food Category'])
+
+        mapping = pd.merge(mapping, self.land_factors[:,['Category ID','Food Category','Land Use (m^2)']],
+                            how = 'left',
+                            left_on = 'CategoryID',
+                            right_on = 'Category ID')
+                
+        mapping = mapping.drop(columns = ['Category ID', 'Food Category'])
+
+        for index in mapping.index:
+            if np.isnan(mapping.loc[index, 'Category ID']):
+                mapping.loc[index, 'Land Use (m^2)'] = 0
+                mapping.loc[index, 'Water use (L / kg food)'] = 0
+                mapping.loc[index, 'Nitrogen lost (kg N / kg food)'] = 0
+                mapping.loc[index, 'Active Total Supply Chain Emissions (kg CO2 / kg food)'] = 0
+
+        return mapping
+    def identify_manual_adjustments(self) -> None:
+        """Identify manual adjustments"""
+        self.__read_emissions_data()
+        self.__read_update_data()
+        self.__update_preps()
+        self.__update_items_assigned()
+        self.mapping = self.__create_mapping()
+        ## TODO
+        ## Prompt user to input manual adjustments
+    def check_ingredients_and_mapping(self) -> None:
+        """Check if ingredients are in mapping"""
+        map_list = self.mapping['ItemId'].unqiue()
+        ingre_list = self.labeller.ingredients['IngredientId'].unique()
+        absent_list = []
+
+        for item in ingre_list:
+            if item not in map_list and item.startswith('I'):
+                absent_list.append(item)
+        
+        return len(absent_list) == 0
+    ##Data Analysis
+    
+
     
