@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">
+    <!-- Styles -->
+    <defs>
+        <style>
+            .box { fill: #e6f3f7; stroke: #000000; stroke-width: 1; }
+            .header { fill: #b8dbe5; stroke: #000000; stroke-width: 1; }
+            .text { font-family: Arial, sans-serif; font-size: 14px; }
+            .title { font-family: Arial, sans-serif; font-size: 16px; font-weight: bold; }
+        </style>
+    </defs>
+
+    <!-- Recipe Box -->
+    <g transform="translate(300,50)" >
+        <rect width="240" height="215" class="box" rx="5" />
+        <rect width="240" height="30" class="header" rx="5" />
+        <text x="95" y="20" class="title">Recipe</text>
+        <text x="10" y="50" class="text">OC ID: int</text>
+        <text x="10" y="70" class="text">Name: str</text>
+        <text x="10" y="90" class="text">GHG Emissions: int</text>
+        <text x="10" y="110" class="text">Water Use: int</text>
+        <text x="10" y="130" class="text">Stress Weighted Water Use: int</text>
+        <text x="10" y="150" class="text">Nitrogen Lost: int</text>
+        <text x="10" y="170" class="text">Land Use: int</text>
+        <text x="10" y="190" class="text">Ingredients: Ingredient[]</text>
+        <text x="10" y="210" class="text">Label: str</text>
+    </g>
+
+    <!-- Ingredient Box -->
+    <g transform="translate(300,300)">
+        <rect width="240" height="100" class="box" rx="5" />
+        <rect width="240" height="30" class="header" rx="5" />
+        <text x="80" y="20" class="title">Ingredient</text>
+        <text x="10" y="50" class="text">Name: str</text>
+        <text x="10" y="70" class="text">Item: Item</text>
+        <text x="10" y="90" class="text">Quantity: int</text>
+    </g>
+
+    <!-- Prep Box -->
+    <g transform="translate(50,450)">
+        <rect width="240" height="215" class="box" rx="5" />
+        <rect width="240" height="30" class="header" rx="5" />
+        <text x="100" y="20" class="title">Prep</text>
+        <text x="10" y="50" class="text">OC ID: int</text>
+        <text x="10" y="70" class="text">Name: str</text>
+        <text x="10" y="90" class="text">GHG Emission: int</text>
+        <text x="10" y="110" class="text">Water Use: int</text>
+        <text x="10" y="130" class="text">Stress Weighted Water use: int</text>
+        <text x="10" y="150" class="text">Nitrogen Lost: int</text>
+        <text x="10" y="170" class="text">Land Use: int</text>
+        <text x="10" y="190" class="text">Ingredients: Ingredient[]</text>
+    </g>
+
+    <!-- Item Box -->
+    <g transform="translate(550,450)">
+        <rect width="240" height="215" class="box" rx="5" />
+        <rect width="240" height="30" class="header" rx="5" />
+        <text x="100" y="20" class="title">Item</text>
+        <text x="10" y="50" class="text">OC ID: int</text>
+        <text x="10" y="70" class="text">Name: str</text>
+        <text x="10" y="90" class="text">Category ID: int</text>
+        <text x="10" y="110" class="text">GHG Emission: int</text>
+        <text x="10" y="130" class="text">Water Use: int</text>
+        <text x="10" y="150" class="text">Stress Weighted Water use: int</text>
+        <text x="10" y="170" class="text">Nitrogen Lost: int</text>
+        <text x="10" y="190" class="text">Land Use: int</text>
+    </g>
+
+    <!-- Connections -->
+    <g stroke="black" stroke-width="1">
+        <!-- Recipe to Ingredient -->
+        <line x1="420" y1="265" x2="420" y2="300" />
+        <circle cx="420" cy="265" r="3" fill="black" />
+        <circle cx="420" cy="300" r="3" fill="black" />
+        
+        <!-- Ingredient to Prep and Item -->
+        <path d="M 300,350 L 170,350 L 170,450" fill="none" stroke="black" />
+        <path d="M 540,350 L 670,350 L 670,450" fill="none" stroke="black" />
+    </g>
+</svg>
