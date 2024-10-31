@@ -1,4 +1,4 @@
-from src.core.recipe import Recipe
+from recipe import Recipe
 
 class Prep(Recipe):
     """"

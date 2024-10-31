@@ -5,7 +5,7 @@ from typing import List, Optional
 import pandas as pd
 import logging
 
-logging.basicConfig(level = logging.INFO, fprmat = "%(asctime)s -- %(levelname)s - %(message)s")
+logging.basicConfig(level = logging.INFO, format = "%(asctime)s -- %(levelname)s - %(message)s")
 
 class Labeller:
     """This class is designed for representing the preprocessed dataset"""

@@ -3,7 +3,7 @@ import tempfile
 from xml.etree.ElementTree import Element, SubElement, ElementTree
 import pytest
 import pandas as pd
-from src.core.labeller import Labeller  # Adjusted import path to match the project structure
+from core.lib.labeller import Labeller  # Adjusted import path to match the project structure
 
 @pytest.fixture
 def create_xml_files():

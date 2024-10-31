@@ -1,5 +1,5 @@
 import numpy as np
-from src.core.ingredient import Ingredient
+from ingredient import Ingredient
 
 class Recipe:
     """

@@ -3,7 +3,7 @@ from unittest import mock
 import xml.etree.ElementTree as et
 import pytest
 import pandas as pd
-from src.core.labeller import Labeller
+from core.lib.labeller import Labeller
 
 
 # Mock data for XML parsing
