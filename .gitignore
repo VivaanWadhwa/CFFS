@@ -7,3 +7,4 @@ __pycache__
 data/archive
 data/Misc
 .DS_Store
+src/frontend/node_modules
