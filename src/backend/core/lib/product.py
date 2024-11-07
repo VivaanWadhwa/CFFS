@@ -1,4 +1,5 @@
 from src.backend.core.lib.recipe import Recipe
+import json
 
 class Product(Recipe):
     """
@@ -61,3 +62,20 @@ class Product(Recipe):
         d = super().to_dict()
         d["Label"] = self.label
         return d
+    def from_json(self, data: str):
+        """
+        Function to convert a json string to a Product object
+        
+        Input:
+        data: String: JSON String
+        
+        Output:
+        None
+        """
+        d = json.loads(data)
+        self.idx = d["idx"]
+        self.name = d["name"]
+        from src.backend.core.lib.ingredient import Ingredient
+        self.ingredients = [Ingredient().from_json(ingredient) for ingredient in d["ingredients"]]
+        self.label = d["label"]
+        return self

@@ -1,3 +1,5 @@
+import json
+
 class Item:
     """
     Class representing an Item
@@ -49,4 +51,22 @@ class Item:
                 "stress_weighted_water_use": self.stress_weighted_water_use,
                 "land_use": self.land_use,
                 "nitrogen_lost": self.nitrogen_lost}
+    def from_json(self, data: str) -> None:
+        """
+        Function to convert a JSON string to an Item object
+
+        Input:
+        data: String
+
+        Output:
+        None
+        """
+        data = json.loads(data)
+        self.idx = data["idx"]
+        self.name = data["name"]
+        self.ghg_emissions = data["ghg_emissions"]
+        self.water_use = data["water_use"]
+        self.stress_weighted_water_use = data["stress_weighted_water_use"]
+        self.land_use = data["land_use"]
+        self.nitrogen_lost = data["nitrogen_lost"]
         

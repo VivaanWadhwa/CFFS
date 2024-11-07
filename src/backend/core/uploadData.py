@@ -29,6 +29,9 @@ if __name__ == "__main__":
     output = myOutlet.to_dict()
     output["status"] = "success"
     json_output = json.dumps(output, indent=4)
+    os.makedirs("data/preprocessed", exist_ok=True)
+    with open(f"data/preprocessed/{outlet_name}.json", "w") as f:
+        f.write(json_output)
     print(json_output)
 
 

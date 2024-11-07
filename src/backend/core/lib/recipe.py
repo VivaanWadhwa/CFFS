@@ -1,3 +1,5 @@
+import json
+
 class Recipe:
     """
     Class representing a recipe.

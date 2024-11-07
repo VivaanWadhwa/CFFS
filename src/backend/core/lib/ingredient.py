@@ -1,3 +1,7 @@
+import json
+from src.backend.core.lib.item import Item
+from src.backend.core.lib.prep import Prep
+
 class Ingredient:
     """
     Class for representing an ingredient of
@@ -15,6 +19,7 @@ class Ingredient:
         name: String: Name of the ingredient
         quantity: Integer: Quantity of the ingredient
         Ingredient: one of Item or Prep: Ingredient object
+        Ingredient_type: String: Type of the ingredient
         uom: String: Unit of measurement
 
         Output:
@@ -23,6 +28,7 @@ class Ingredient:
         self.name = name
         self.quantity = quantity
         self.ingredient = ingredient
+        self.ingredient_type = type(ingredient).__name__
         self.uom = uom
     def __str__(self) -> str:
         """
@@ -52,5 +58,28 @@ class Ingredient:
         return {"name": self.name,
                 "quantity": self.quantity,
                 "uom": self.uom,
+                "ingredient_type": self.ingredient_type,
                 "ingredient": self.ingredient.to_dict()}
-    
+    def from_json(self, data: str) -> None:
+        """
+        Function to convert a JSON string to an Ingredient object
+
+        Input:
+        data: String: JSON string
+
+        Output:
+        None
+        """
+        data = json.loads(data)
+        self.name = data["name"]
+        self.quantity = data["quantity"]
+        self.uom = data["uom"]
+        self.ingredient_type = data["ingredient_type"]
+        if self.ingredient_type == "Item":
+            self.ingredient = Item()
+            self.ingredient.from_json(json.dumps(data["ingredient"]))
+        elif self.ingredient_type == "Prep":
+            self.ingredient = Prep()
+            self.ingredient.from_json(json.dumps(data["ingredient"]))
+        else:
+            raise ValueError("Invalid ingredient type")
