@@ -46,7 +46,7 @@ This structure ensures a clear separation of concerns and enhances maintainabili
 
    All executables created this way will be stored in the `dist` folder.
 
-**Note:** Ensure that your scripts are generalized and accept arguments for flexibility, as the frontend executes these scripts by spawning child processes.
+**Note:** Ensure that your scripts are generalized and accept arguments for flexibility, as the frontend executes these scripts by spawning child processes. The scripts print out their outputs which are parsed by the frontend.
 
 ---
 
